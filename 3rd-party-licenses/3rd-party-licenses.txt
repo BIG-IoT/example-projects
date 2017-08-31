@@ -1,0 +1,6 @@
+Third Party Licenses
+====================
+
+The BIG-IoT Example Projects uses software from 3rd parties. 
+The individual software components and their licenses are listed in 
+dedicated license files in this directory.
