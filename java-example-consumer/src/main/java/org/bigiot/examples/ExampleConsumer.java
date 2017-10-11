@@ -17,32 +17,39 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import org.bigiot.lib.Consumer;
-import org.bigiot.lib.exceptions.AccessToNonActivatedOfferingException;
-import org.bigiot.lib.exceptions.AccessToNonSubscribedOfferingException;
-import org.bigiot.lib.exceptions.IncompleteOfferingQueryException;
-import org.bigiot.lib.feed.AccessFeed;
-import org.bigiot.lib.model.BigIotTypes;
-import org.bigiot.lib.model.Information;
-import org.bigiot.lib.model.BigIotTypes.LicenseType;
-import org.bigiot.lib.model.Price.Euros;
-import org.bigiot.lib.offering.AccessParameters;
-import org.bigiot.lib.offering.Offering;
-import org.bigiot.lib.offering.SubscribableOfferingDescription;
-import org.bigiot.lib.query.OfferingQuery;
-import org.bigiot.lib.query.elements.Region;
+
+import org.eclipse.bigiot.lib.Consumer;
+import org.eclipse.bigiot.lib.exceptions.AccessToNonActivatedOfferingException;
+import org.eclipse.bigiot.lib.exceptions.AccessToNonSubscribedOfferingException;
+import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingQueryException;
+import org.eclipse.bigiot.lib.feed.AccessFeed;
+import org.eclipse.bigiot.lib.model.BigIotTypes;
+import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
+import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
+import org.eclipse.bigiot.lib.model.Information;
+import org.eclipse.bigiot.lib.model.Price.Euros;
+import org.eclipse.bigiot.lib.offering.AccessParameters;
+import org.eclipse.bigiot.lib.offering.Offering;
+import org.eclipse.bigiot.lib.offering.SubscribableOfferingDescription;
+import org.eclipse.bigiot.lib.query.OfferingQuery;
+import org.eclipse.bigiot.lib.query.elements.Region;
+import org.eclipse.bigiot.lib.query.elements.RegionFilter;
 import org.joda.time.Duration;
 
 public class ExampleConsumer {
 	
 	private static final String MARKETPLACE_URI = "https://market.big-iot.org";
+	
 	private static final String CONSUMER_ID	    = "TestOrganization-TestConsumer";
-	private static final String CONSUMER_SECRET = "46VL4ienQ3iQLalmKZBnBg==";
+	private static final String CONSUMER_SECRET = "-ckGQlsUTHSWaix3W8Aiqw==";
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IncompleteOfferingQueryException, IOException, AccessToNonSubscribedOfferingException, AccessToNonActivatedOfferingException {
 		
 		// Initialize consumer with Consumer ID and Marketplace URL
-		Consumer consumer = new Consumer(CONSUMER_ID, MARKETPLACE_URI); 
+		Consumer consumer = new Consumer(CONSUMER_ID, MARKETPLACE_URI);
+		
+//		consumer.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
+//		consumer.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 		
 		// Authenticate consumer on the marketplace
 		consumer.authenticate(CONSUMER_SECRET);
@@ -50,9 +57,9 @@ public class ExampleConsumer {
 	    // Construct Offering Query incrementally
 		OfferingQuery query = OfferingQuery.create("RandomNumberQuery")
 				.withInformation(new Information("Random Number Query", "bigiot:RandomNumber"))
-	    		// .addOutputDataElement("value", new RDFType("schema:random"))
-				.inRegion(Region.city(""))
-				.withAccountingType(BigIotTypes.AccountingType.PER_ACCESS)
+	    		//.addOutputDataElement("value", new RDFType("schema:random"))
+				//.inRegion(RegionFilter.city(""))
+				.withPricingModel(PricingModel.PER_ACCESS)
 				.withMaxPrice(Euros.amount(0.002))             
 				.withLicenseType(LicenseType.OPEN_DATA_LICENSE);
 

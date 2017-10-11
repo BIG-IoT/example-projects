@@ -16,20 +16,23 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
-import org.bigiot.lib.ProviderSpark;
-import org.bigiot.lib.exceptions.IncompleteOfferingDescriptionException;
-import org.bigiot.lib.handlers.AccessRequestHandler;
-import org.bigiot.lib.model.BigIotTypes.AccountingType;
-import org.bigiot.lib.model.BigIotTypes.LicenseType;
-import org.bigiot.lib.model.Information;
-import org.bigiot.lib.model.Price.Euros;
-import org.bigiot.lib.model.RDFType;
-import org.bigiot.lib.model.ValueType;
-import org.bigiot.lib.offering.OfferingDescription;
-import org.bigiot.lib.offering.RegisteredOffering;
-import org.bigiot.lib.offering.RegistrableOfferingDescription;
-import org.bigiot.lib.query.elements.Region;
-import org.bigiot.lib.serverwrapper.BigIotHttpResponse;
+
+import org.eclipse.bigiot.lib.ProviderSpark;
+import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingDescriptionException;
+import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
+import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
+import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
+import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
+import org.eclipse.bigiot.lib.model.Information;
+import org.eclipse.bigiot.lib.model.Price.Euros;
+import org.eclipse.bigiot.lib.model.RDFType;
+import org.eclipse.bigiot.lib.model.ValueType;
+import org.eclipse.bigiot.lib.offering.OfferingDescription;
+import org.eclipse.bigiot.lib.offering.RegisteredOffering;
+import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
+import org.eclipse.bigiot.lib.query.elements.Region;
+import org.eclipse.bigiot.lib.query.elements.RegionFilter;
+import org.eclipse.bigiot.lib.serverwrapper.BigIotHttpResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -39,8 +42,9 @@ import org.json.JSONObject;
 public class ExampleProvider {
 	
 	private static final String MARKETPLACE_URI = "https://market.big-iot.org";
+	
 	private static final String PROVIDER_ID 	= "TestOrganization-TestProvider";
-	private static final String PROVIDER_SECRET = "lvYjYgQXS4GlE2gxEr0SVw==";
+	private static final String PROVIDER_SECRET = "Z7guhReeQkqQ0uKe2VP32g==";
 	
 	private static Random rand = new Random();
 
@@ -74,10 +78,13 @@ public class ExampleProvider {
 		};	
 	};
 
-	public static void main(String args[]) throws InterruptedException, IncompleteOfferingDescriptionException, IOException {
+	public static void main(String args[]) throws InterruptedException, IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
 				
 		// Initialize provider with Provider ID and Marketplace URI
 		ProviderSpark provider = new ProviderSpark(PROVIDER_ID, MARKETPLACE_URI, "localhost", 9020);
+		
+//		provider.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
+//		provider.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 		
 		// Authenticate provider instance on the marketplace 
 	    provider.authenticate(PROVIDER_SECRET);
@@ -85,13 +92,13 @@ public class ExampleProvider {
 	    // Construct Offering Description of your Offering incrementally
 	    RegistrableOfferingDescription offeringDescription = provider.createOfferingDescription("RandomNumberOffering")
 	    		.withInformation(new Information ("Random Number", new RDFType("bigiot:RandomNumber")))
-	    		//.addInputDataElement("longitude", new RDFType("schema:longitude"))
-	    		//.addInputDataElement("latitude", new RDFType("schema:latitude"))
-	    		//.addInputDataElement("radius", new RDFType("schema:geoRadius"))
-	    		.addOutputDataElement("value", new RDFType("schema:random"), ValueType.NUMBER)
-	    		.inRegion(Region.city("Stuttgart"))
+	    		//.addInputData("longitude", new RDFType("schema:longitude"))
+	    		//.addInputData("latitude", new RDFType("schema:latitude"))
+	    		//.addInputData("radius", new RDFType("schema:geoRadius"))
+	    		.addOutputData("value", new RDFType("schema:random"), ValueType.NUMBER)
+	    		.inRegion(RegionFilter.city("Stuttgart"))
 	    		.withPrice(Euros.amount(0.001))
-	    		.withAccountingType(AccountingType.PER_ACCESS)
+	    		.withPricingModel(PricingModel.PER_ACCESS)
 	    		.withLicenseType(LicenseType.OPEN_DATA_LICENSE)
 	    		//Below is actually Offering specific	
 	    		.withRoute("randomvalue")
