@@ -82,9 +82,6 @@ public class ComplexExampleConsumer {
 //		consumer.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
 //		consumer.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 		
-		consumer.setProxy("194.145.60.1",9400); //Enable this line if you are behind a proxy
-		consumer.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
-		
 		// Authenticate provider on the marketplace
 		consumer.authenticate(CONSUMER_SECRET);
 

@@ -48,9 +48,6 @@ public class StarWarsRegistryProvider {
 //		provider.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
 //		provider.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 		
-		provider.setProxy("194.145.60.1",9400); //Enable this line if you are behind a proxy
-		provider.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
-		
 		provider.authenticate(PROVIDER_SECRET);
 		
 		RegistrableOfferingDescription offeringDescription = provider
