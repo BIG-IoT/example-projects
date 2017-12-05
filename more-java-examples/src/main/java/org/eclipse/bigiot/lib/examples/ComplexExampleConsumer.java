@@ -1,22 +1,12 @@
 /**
- * Copyright (c) 2016-2017 BIG IoT Project Consortium and others (see below).
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v2.0
- * which accompanies this distribution, and is available at
- * https://www.eclipse.org/org/documents/epl-2.0/index.php
- *
- * Contributors in alphabetical order
- * (for individual contributions, please refer to git log):
- *
- * - Bosch Software Innovations GmbH
- *     > Denis Kramer
- * - Robert Bosch GmbH
- *     > Stefan Schmid (stefan.schmid@bosch.com)
- * - Siemens AG
- *     > Andreas Ziller (andreas.ziller@siemens.com)
- *
+ *	Copyright (c) 2017 by Contributors of the BIG IoT Project Consortium (see below).
+ *	All rights reserved. 
+ *		
+ *	This source code is licensed under the MIT license found in the
+ * 	LICENSE file in the root directory of this source tree.
+ *		
  */
+
 package org.eclipse.bigiot.lib.examples;
 
 import java.io.IOException;
