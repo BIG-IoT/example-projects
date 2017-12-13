@@ -13,6 +13,7 @@
 package org.bigiot.examples;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
@@ -30,10 +31,8 @@ import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
 import org.eclipse.bigiot.lib.offering.RegisteredOffering;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
-import org.eclipse.bigiot.lib.query.elements.Region;
-import org.eclipse.bigiot.lib.query.elements.RegionFilter;
 import org.eclipse.bigiot.lib.serverwrapper.BigIotHttpResponse;
-import org.json.JSONArray;
+
 import org.json.JSONObject;
 
 /** 
@@ -44,14 +43,14 @@ public class ExampleProvider {
 	private static final String MARKETPLACE_URI = "https://market.big-iot.org";
 	
 	private static final String PROVIDER_ID 	= "TestOrganization-TestProvider";
-	private static final String PROVIDER_SECRET = "Z7guhReeQkqQ0uKe2VP32g==";
+	private static final String PROVIDER_SECRET = "C3-gsQFATuiIE36QiUPgOA==";
 	
 	private static Random rand = new Random();
 
 	private static AccessRequestHandler accessCallback = new AccessRequestHandler() {
 		@Override
 		public BigIotHttpResponse processRequestHandler (
-	           OfferingDescription offeringDescription, Map<String,Object> inputData) {
+	           OfferingDescription offeringDescription, Map<String,Object> inputData, String subscriberId, String consumerInfo) {
 			
 			/*
 			double longitude=0, latitude=0, radius=0;
@@ -66,16 +65,14 @@ public class ExampleProvider {
 			}
 			*/
 			
-			// Create the response as a JSON Object of the form: { "results" : [ "value" : 0.XXX ] }
-			JSONObject value = new JSONObject();
-			value.put("value", rand.nextFloat());
-			JSONArray array = new JSONArray();
-			array.put(value);
-			JSONObject results = new JSONObject();
-			results.put("results",  array);
-						
-			return BigIotHttpResponse.okay().withBody(results.toString()).asJsonType();
-		};	
+		    // Prepare the offering response as a JSONObject/Array - according to the Output Data defined in the Offering Description
+		    JSONObject number = new JSONObject();
+		    number.put("value", rand.nextFloat());
+		    number.put("timestamp", new Date().getTime()); 
+		   
+	        // Send the response as JSON in the form: { [ { "value" : 0.XXX, "timestamp" : YYYYYYY } ] }
+			return BigIotHttpResponse.okay().withBody(number).asJsonType();
+		}
 	};
 
 	public static void main(String args[]) throws InterruptedException, IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
@@ -95,8 +92,9 @@ public class ExampleProvider {
 	    		//.addInputData("longitude", new RDFType("schema:longitude"))
 	    		//.addInputData("latitude", new RDFType("schema:latitude"))
 	    		//.addInputData("radius", new RDFType("schema:geoRadius"))
-	    		.addOutputData("value", new RDFType("schema:random"), ValueType.NUMBER)
-	    		.inRegion(RegionFilter.city("Stuttgart"))
+	    		.addOutputData("value", new RDFType("bigiot:randomValue"), ValueType.NUMBER)
+	            .addOutputData("timestamp", new RDFType("schema:datePublished"), ValueType.NUMBER)
+	    		//.inRegion(RegionFilter.city("Stuttgart"))
 	    		.withPrice(Euros.amount(0.001))
 	    		.withPricingModel(PricingModel.PER_ACCESS)
 	    		.withLicenseType(LicenseType.OPEN_DATA_LICENSE)
