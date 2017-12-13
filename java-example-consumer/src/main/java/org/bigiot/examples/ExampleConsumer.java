@@ -23,17 +23,16 @@ import org.eclipse.bigiot.lib.exceptions.AccessToNonActivatedOfferingException;
 import org.eclipse.bigiot.lib.exceptions.AccessToNonSubscribedOfferingException;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingQueryException;
 import org.eclipse.bigiot.lib.feed.AccessFeed;
-import org.eclipse.bigiot.lib.model.BigIotTypes;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
 import org.eclipse.bigiot.lib.model.Information;
 import org.eclipse.bigiot.lib.model.Price.Euros;
 import org.eclipse.bigiot.lib.offering.AccessParameters;
+import org.eclipse.bigiot.lib.offering.AccessResponse;
 import org.eclipse.bigiot.lib.offering.Offering;
 import org.eclipse.bigiot.lib.offering.SubscribableOfferingDescription;
 import org.eclipse.bigiot.lib.query.OfferingQuery;
-import org.eclipse.bigiot.lib.query.elements.Region;
-import org.eclipse.bigiot.lib.query.elements.RegionFilter;
+
 import org.joda.time.Duration;
 
 public class ExampleConsumer {
@@ -41,7 +40,7 @@ public class ExampleConsumer {
 	private static final String MARKETPLACE_URI = "https://market.big-iot.org";
 	
 	private static final String CONSUMER_ID	    = "TestOrganization-TestConsumer";
-	private static final String CONSUMER_SECRET = "-ckGQlsUTHSWaix3W8Aiqw==";
+	private static final String CONSUMER_SECRET = "UDiR00ysTbqcOLRMn6dTTQ==";
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IncompleteOfferingQueryException, IOException, AccessToNonSubscribedOfferingException, AccessToNonActivatedOfferingException {
 		
@@ -57,7 +56,7 @@ public class ExampleConsumer {
 	    // Construct Offering Query incrementally
 		OfferingQuery query = OfferingQuery.create("RandomNumberQuery")
 				.withInformation(new Information("Random Number Query", "bigiot:RandomNumber"))
-	    		//.addOutputDataElement("value", new RDFType("schema:random"))
+	    		//.addOutputData("value", new RDFType("schema:random"), ValueType.NUMBER)
 				//.inRegion(RegionFilter.city(""))
 				.withPricingModel(PricingModel.PER_ACCESS)
 				.withMaxPrice(Euros.amount(0.002))             
@@ -79,7 +78,12 @@ public class ExampleConsumer {
 	
 			// Prepare Access Parameters
 			AccessParameters accessParameters = AccessParameters.create();
-					
+			
+			// EXAMPLE 1: ONE-TIME ACCESS to the Offering
+			AccessResponse response = offering.accessOneTime(accessParameters).get();
+            System.out.println("Received data: " + response.asJsonNode().toString());
+            
+            // EXAMPLE 2: CONTINUOUS ACCESS to the Offering 
 			// Create an Access Feed with callbacks for the received results		
 			Duration feedDuration = Duration.standardHours(2);
 			Duration feedInterval = Duration.standardSeconds(2);
@@ -87,7 +91,7 @@ public class ExampleConsumer {
 										feedDuration.getMillis(), 
 										feedInterval.getMillis(), 
 										(f,r) -> {
-											System.out.println("Received data: " + r.asJsonNode().get("results").toString());
+											System.out.println("Received data: " + r.asJsonNode().toString());
 										},
 										(f,r) -> {
 											System.out.println("Feed operation failed");
