@@ -6,7 +6,6 @@
  *      LICENSE file in the root directory of this source tree.
  *
  */
-
 package org.eclipse.bigiot.lib.examples;
 
 import java.io.IOException;
@@ -17,6 +16,7 @@ import org.eclipse.bigiot.lib.ProviderSpark;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingDescriptionException;
 import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
 import org.eclipse.bigiot.lib.handlers.AccessStreamFilterHandler;
+import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
 import org.eclipse.bigiot.lib.model.Price.Euros;
@@ -31,13 +31,6 @@ import org.json.JSONObject;
  * Example for using BIG IoT API as a provider. This example corresponds with ExampleConsumerNew.java
  */
 public class ExampleProviderAccessStream {
-
-    private static final String MARKETPLACE_URI = "https://market.big-iot.org";
-    // private static final String MARKETPLACE_URI = "https://market-int.big-iot.org";
-    // private static final String MARKETPLACE_URI = "https://market-dev.big-iot.org";
-
-    private static final String PROVIDER_ID = "Null_Island-Happy_Parkings";
-    private static final String PROVIDER_SECRET = "kETI8TK1QjC5whzgNDG9gw==";
 
     private static AccessStreamFilterHandler accessStreamFilterCallback = new AccessStreamFilterHandler() {
         @Override
@@ -64,15 +57,18 @@ public class ExampleProviderAccessStream {
 
     public static void main(String[] args)
             throws InterruptedException, IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
+        
+        // Load example properties file
+        BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
         // Initialize provider with provider id and Marketplace URI
-        ProviderSpark provider = new ProviderSpark(PROVIDER_ID, MARKETPLACE_URI, "localhost", 9004);
+        ProviderSpark provider = new ProviderSpark(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME, prop.PROVIDER_PORT);
 
         // provider.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
         // provider.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 
         // Authenticate provider on the marketplace
-        provider.authenticate(PROVIDER_SECRET);
+        provider.authenticate(prop.PROVIDER_SECRET);
 
         // Construct Offering Description of your Offering incrementally
         RegistrableOfferingDescription offeringDescription =

@@ -17,7 +17,6 @@ import org.eclipse.bigiot.lib.ProviderSpark;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingDescriptionException;
 import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
 import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
-import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
 import org.eclipse.bigiot.lib.model.Price.Euros;
@@ -32,7 +31,11 @@ import org.json.JSONObject;
 /**
  * Example for using BIG IoT API as a provider.
  */
-public class ExampleProvider {
+public class BasicProvider {
+
+    private static final String MARKETPLACE_URI = "https://market.big-iot.org";
+    private static final String PROVIDER_ID = "TestOrganization-TestProvider";
+    private static final String PROVIDER_SECRET = "C3-gsQFATuiIE36QiUPgOA==";
 
     private static AccessRequestHandler accessCallbackDummy = new AccessRequestHandler() {
         @Override
@@ -70,18 +73,14 @@ public class ExampleProvider {
     public static void main(String[] args)
             throws IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
 
-        // Load example properties file
-        BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
-
         // Initialize provider with provider id and Marketplace URI
-        ProviderSpark provider = ProviderSpark.create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME,
-                prop.PROVIDER_PORT);
+        ProviderSpark provider = ProviderSpark.create(PROVIDER_ID, MARKETPLACE_URI, "localhost", 9003);
 
         // provider.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
         // provider.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 
         // Authenticate provider on the marketplace
-        provider.authenticate(prop.PROVIDER_SECRET);
+        provider.authenticate(PROVIDER_SECRET);
 
         // Construct Offering Description of your Offering incrementally
         RegistrableOfferingDescription offeringDescription =

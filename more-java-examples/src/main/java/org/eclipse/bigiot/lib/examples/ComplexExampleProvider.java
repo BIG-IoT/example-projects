@@ -48,7 +48,7 @@ public class ComplexExampleProvider {
 	private static AccessRequestHandler accessCallbackDummy = new AccessRequestHandler(){
 		@Override
 		public BigIotHttpResponse processRequestHandler (
-				OfferingDescription offeringDescription, Map<String,Object> inputData) {
+				OfferingDescription offeringDescription, Map<String,Object> inputData, String subscriberId, String consumerInfo) {
 
 			double longitude=0, latitude=0, radius=0;
 
