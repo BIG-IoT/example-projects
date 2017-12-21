@@ -11,26 +11,15 @@ package org.eclipse.bigiot.lib.examples.types;
 
 public class MyParkingResultPojo {
 	
-	public static class Coordinate {
-		
-		public double latitude;
-		public double longitude;
-		@Override
-		public String toString() {
-			return "Coordinate [latitude=" + latitude + ", longitude=" + longitude + "]";
-		}
-		
-		
-	}
-	public MyParkingResultPojo.Coordinate myCoordinate;
-	public double myDistance;
-	public String myStatus;
-	@Override
-	public String toString() {
-		return "MyParkingResultPojo [myCoordinate=" + myCoordinate + ", myDistance=" + myDistance + ", myStatus="
-				+ myStatus + "]";
-	}
-	
-	
+    public double latitude;
+    public double longitude;
+    public double distance;
+    public String status;
+
+    @Override
+    public String toString() {
+        return "MyParkingResultPojo [longitude=" + longitude + ", latitude=" + latitude + ", distance=" + distance
+                + ", status=" + status + "]";
+    }
 
 }

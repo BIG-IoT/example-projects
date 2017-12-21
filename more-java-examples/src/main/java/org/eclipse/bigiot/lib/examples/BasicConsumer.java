@@ -20,7 +20,6 @@ import org.eclipse.bigiot.lib.exceptions.AccessToNonActivatedOfferingException;
 import org.eclipse.bigiot.lib.exceptions.AccessToNonSubscribedOfferingException;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingQueryException;
 import org.eclipse.bigiot.lib.feed.AccessFeed;
-import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.misc.Helper;
 import org.eclipse.bigiot.lib.model.BigIotTypes;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
@@ -44,9 +43,13 @@ import org.slf4j.LoggerFactory;
  * 
  * 
  */
-public class ExampleConsumer {
+public class BasicConsumer {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExampleConsumer.class);
+    private static final String MARKETPLACE_URI = "https://market.big-iot.org";
+    private static final String CONSUMER_ID = "TestOrganization-TestConsumer";
+    private static final String CONSUMER_SECRET = "UDiR00ysTbqcOLRMn6dTTQ==";
+
+    private static final Logger logger = LoggerFactory.getLogger(BasicConsumer.class);
 
     /*
      * Main Routine
@@ -61,17 +64,14 @@ public class ExampleConsumer {
             throws InterruptedException, ExecutionException, IncompleteOfferingQueryException, IOException,
             AccessToNonSubscribedOfferingException, AccessToNonActivatedOfferingException {
 
-        // Load example properties file
-        BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
-
         // Initialize Consumer with Consumer ID and marketplace URL
-        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI);
+        Consumer consumer = new Consumer(CONSUMER_ID, MARKETPLACE_URI);
 
         // consumer.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
         // consumer.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 
         // Authenticate provider on the marketplace
-        consumer.authenticate(prop.CONSUMER_SECRET);
+        consumer.authenticate(CONSUMER_SECRET);
 
         // Construct Offering search query incrementally
         OfferingQuery query = OfferingQuery.create("ParkingQuery")
@@ -82,7 +82,7 @@ public class ExampleConsumer {
                 .addInputData(new RDFType("schema:geoRadius"), ValueType.NUMBER)
                 .addOutputData(new RDFType("schema:longitude"), ValueType.NUMBER)
                 .addOutputData(new RDFType("schema:latitude"), ValueType.NUMBER)
-                // .addOutputData(new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
+                .addOutputData(new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
                 .addOutputData(new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
                 .withPricingModel(BigIotTypes.PricingModel.PER_ACCESS).withMaxPrice(Euros.amount(0.1))
                 // .withPricingModel(BigIotTypes.PricingModel.FREE)
@@ -91,12 +91,6 @@ public class ExampleConsumer {
         CompletableFuture<SubscribableOfferingDescription> offeringDescriptionFuture = consumer.discover(query)
                 .thenApply(SubscribableOfferingDescription::showOfferingDescriptions)
                 .thenApply(l -> OfferingSelector.create().onlyLocalhost().cheapest().mostPermissive().select(l));
-
-        // Alternatively you can use discover with callbacks
-        // consumer.discover(query,(q,l)-> {
-        // log("Discovery with callback");
-        // SubscribableOfferingDescription.showOfferingDescriptions(list);
-        // });
 
         SubscribableOfferingDescription offeringDescription = offeringDescriptionFuture.get();
         if (offeringDescription == null) {
@@ -109,18 +103,8 @@ public class ExampleConsumer {
         Offering offering = offeringFuture.get();
 
         // Prepare access parameters
-        // Supported in the future as soon marketplace supports complex data
-        // types
-        // AccessParameters accessParameters= AccessParameters.create()
-        // .addRdfTypeValue("schema:GeoCircle", AccessParameters.create()
-        // .addRdfTypeValue("schema:GeoCoordinates", AccessParameters.create()
-        // .addRdfTypeValue("schema:latitude", 50.22)
-        // .addRdfTypeValue("schema:longitude", 8.11))
-        // .addRdfTypeValue("schema:geoRadius", 777));
-
         AccessParameters accessParameters = AccessParameters.create().addRdfTypeValue("schema:latitude", 42.0)
                 .addRdfTypeValue("schema:longitude", 9.0).addRdfTypeValue("schema:geoRadius", 777);
-        // .addNameValue("accessSessionId", 123456789);
 
         CompletableFuture<AccessResponse> response = offering.accessOneTime(accessParameters);
 
@@ -159,20 +143,6 @@ public class ExampleConsumer {
 
         // Printing feed status
         log(accessFeed.getStatus());
-
-        Thread.sleep(10L * Helper.Second);
-
-        // Resuming Feed
-        accessFeed.resume();
-
-        Thread.sleep(10L * Helper.Second);
-
-        // Setting a new lifetime for the feed
-        accessFeed.setLifetimeSeconds(5000);
-
-        Thread.sleep(10L * Helper.Second);
-
-        accessFeed.stop();
 
         // Unsubscribe Offering
         offering.unsubscribe();
