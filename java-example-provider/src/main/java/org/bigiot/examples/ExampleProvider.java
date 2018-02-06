@@ -22,28 +22,25 @@ import org.eclipse.bigiot.lib.ProviderSpark;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingDescriptionException;
 import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
 import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
+import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
-import org.eclipse.bigiot.lib.model.Information;
+import org.eclipse.bigiot.lib.model.BoundingBox;
+import org.eclipse.bigiot.lib.model.Location;
 import org.eclipse.bigiot.lib.model.Price.Euros;
 import org.eclipse.bigiot.lib.model.RDFType;
 import org.eclipse.bigiot.lib.model.ValueType;
+import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
-import org.eclipse.bigiot.lib.offering.RegisteredOffering;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
 import org.eclipse.bigiot.lib.serverwrapper.BigIotHttpResponse;
-
+import org.joda.time.DateTime;
 import org.json.JSONObject;
 
 /** 
  * Example for using BIG IoT API as a Provider. This example corresponds with Example Consumer project * 
  */
 public class ExampleProvider {
-	
-	private static final String MARKETPLACE_URI = "https://market.big-iot.org";
-	
-	private static final String PROVIDER_ID 	= "TestOrganization-TestProvider";
-	private static final String PROVIDER_SECRET = "C3-gsQFATuiIE36QiUPgOA==";
 	
 	private static Random rand = new Random();
 
@@ -53,16 +50,14 @@ public class ExampleProvider {
 	           OfferingDescription offeringDescription, Map<String,Object> inputData, String subscriberId, String consumerInfo) {
 			
 			/*
-			double longitude=0, latitude=0, radius=0;
-			if (inputData.containsKey("longitude")) {
-				longitude = new Double(inputData.get("longitude"));
-			}
-			if (inputData.containsKey("latitude")) {
-				latitude = new Double(inputData.get("latitude"));
-			}
-			if (inputData.containsKey("radius")) {
-				radius = new Double(inputData.get("radius"));
-			}
+			double longitude = 41.0;
+            if (inputData.containsKey("longitude"))
+                longitude = Double.parseDouble((String) inputData.get("longitude"));
+
+            double latitude = 9.0;
+            if (inputData.containsKey("latitude"))
+                latitude = Double.parseDouble((String) inputData.get("latitude"));
+
 			*/
 			
 		    // Prepare the offering response as a JSONObject/Array - according to the Output Data defined in the Offering Description
@@ -77,33 +72,36 @@ public class ExampleProvider {
 
 	public static void main(String args[]) throws InterruptedException, IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
 				
-		// Initialize provider with Provider ID and Marketplace URI
-		ProviderSpark provider = new ProviderSpark(PROVIDER_ID, MARKETPLACE_URI, "localhost", 9020);
+	    // Load example properties file
+        BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
+
+		// Initialize a provider with Provider ID and Marketplace URI, the local IP/DNS, etc., and authenticate it on the Marketplace
+		ProviderSpark provider = ProviderSpark.create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME, prop.PROVIDER_PORT)
+		                                .authenticate(prop.PROVIDER_SECRET);
 		
-//		provider.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
-//		provider.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
-		
-		// Authenticate provider instance on the marketplace 
-	    provider.authenticate(PROVIDER_SECRET);
-	 	    
+		// provider.setProxy(prop.PROXY, prop.PROXY_PORT); //Enable this line if you are behind a proxy
+		// provider.addProxyBypass(prop.PROXY_BYPASS); //Enable this line and the addresses for internal hosts
+			    
 	    // Construct Offering Description of your Offering incrementally
-	    RegistrableOfferingDescription offeringDescription = provider.createOfferingDescription("RandomNumberOffering")
-	    		.withInformation(new Information ("Random Number", new RDFType("bigiot:RandomNumber")))
-	    		//.addInputData("longitude", new RDFType("schema:longitude"))
-	    		//.addInputData("latitude", new RDFType("schema:latitude"))
-	    		//.addInputData("radius", new RDFType("schema:geoRadius"))
-	    		.addOutputData("value", new RDFType("bigiot:randomValue"), ValueType.NUMBER)
-	            .addOutputData("timestamp", new RDFType("schema:datePublished"), ValueType.NUMBER)
-	    		//.inRegion(RegionFilter.city("Stuttgart"))
-	    		.withPrice(Euros.amount(0.001))
-	    		.withPricingModel(PricingModel.PER_ACCESS)
-	    		.withLicenseType(LicenseType.OPEN_DATA_LICENSE)
-	    		//Below is actually Offering specific	
-	    		.withRoute("randomvalue")
-	    		.withAccessRequestHandler(accessCallback);
+	    RegistrableOfferingDescription offeringDescription = 
+	            OfferingDescription.createOfferingDescription("RandomNumberOffering")
+    	    		.withName("Random Number Offering")
+    	    		.withCategory("urn:proposed:RandomValues")
+    	    		//.addInputData("longitude", new RDFType("schema:longitude"))
+    	    		//.addInputData("latitude", new RDFType("schema:latitude"))
+    	    		.addOutputData("value", new RDFType("proposed:randomValue"), ValueType.NUMBER)
+    	            .addOutputData("timestamp", new RDFType("schema:datePublished"), ValueType.NUMBER)
+    	            //.inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
+                    //.withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
+    	    		.withPrice(Euros.amount(0.001))
+    	    		.withPricingModel(PricingModel.PER_ACCESS)
+    	    		.withLicenseType(LicenseType.OPEN_DATA_LICENSE);
 	    
+	    Endpoints endpoints = Endpoints.create(offeringDescription)
+                    .withAccessRequestHandler(accessCallback);
+
 	    // Register OfferingDescription on Marketplace - this will create a local endpoint based on the embedded Spark Web server
-	    RegisteredOffering offering = offeringDescription.register();
+	    provider.register(offeringDescription, endpoints);
 	    
 		// Run until user presses the ENTER key
 		System.out.println(">>>>>>  Terminate ExampleProvider by pressing ENTER  <<<<<<");
@@ -113,7 +111,7 @@ public class ExampleProvider {
 		System.out.println("Deregister Offering");
 
 		// Deregister the Offering from the Marketplace
-	    offering.deregister();
+	    provider.deregister(offeringDescription);
 	    
 	    // Terminate the Provider instance 
 	    provider.terminate();

@@ -22,7 +22,6 @@ import java.util.Scanner;
 
 import org.eclipse.bigiot.lib.ProviderSpark;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingDescriptionException;
-import org.eclipse.bigiot.lib.exceptions.InvalidOfferingException;
 import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
 import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
@@ -35,7 +34,6 @@ import org.eclipse.bigiot.lib.model.RDFType;
 import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
-import org.eclipse.bigiot.lib.offering.RegisteredOffering;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
 import org.eclipse.bigiot.lib.serverwrapper.BigIotHttpResponse;
 import org.joda.time.DateTime;
@@ -45,7 +43,7 @@ import org.json.JSONObject;
 /**
  * Example for using BIG IoT API as a provider.
  */
-public class ExampleProvider {
+public class ExampleProviderWithAccessRestriction {
 
     private static AccessRequestHandler accessCallback = new AccessRequestHandler() {
         @Override
@@ -78,7 +76,7 @@ public class ExampleProvider {
     };
 
     public static void main(String[] args)
-            throws IncompleteOfferingDescriptionException, IOException, NotRegisteredException, InvalidOfferingException {
+            throws IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
 
         // Load example properties file
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
@@ -95,10 +93,11 @@ public class ExampleProvider {
 
         // Construct Offering Description of your Offering incrementally
         RegistrableOfferingDescription offeringDescription =
-                // providr.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-DemoParkingOffering");
-                OfferingDescription.createOfferingDescription("DemoParkingOffering")
-                        .withName("Demo Parking Offering")
+                // provider.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-Manual_Offering_Test")
+                provider.createOfferingDescription("DemoParkingOfferingWithAccessRestriction")
+                        .withName("Demo Parking Offering with Access Restriction")
                         .withCategory("urn:big-iot:ParkingSpaceCategory")
+/* ---------------> */  .restrictedToOrganizations(prop.ORGANIZATION)
                         .withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
                         .inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
                         // .inCity("Barcelona")
@@ -111,12 +110,12 @@ public class ExampleProvider {
                         .addOutputData("status", new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
                         .withPrice(Euros.amount(0.02)).withPricingModel(PricingModel.PER_ACCESS)
                         .withLicenseType(LicenseType.CREATIVE_COMMONS);
-    
+
         Endpoints endpoints = Endpoints.create(offeringDescription)
-                                       .withAccessRequestHandler(accessCallback);
+                .withAccessRequestHandler(accessCallback);
 
-        RegisteredOffering offering = provider.register(offeringDescription, endpoints);
-
+        provider.register(offeringDescription, endpoints);
+        
         // Run until user input is obtained
         System.out.println(">>>>>>  Terminate ExampleProvider by pressing ENTER  <<<<<<");
         Scanner keyboard = new Scanner(System.in);
@@ -124,7 +123,7 @@ public class ExampleProvider {
         keyboard.close();
 
         // Deregister your offering form Marketplace
-        offering.deregister();
+        provider.deregister(offeringDescription);
 
         // Terminate provider instance
         provider.terminate();

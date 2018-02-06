@@ -15,7 +15,6 @@ package org.bigiot.examples;
 import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.bigiot.lib.Consumer;
@@ -23,9 +22,11 @@ import org.eclipse.bigiot.lib.exceptions.AccessToNonActivatedOfferingException;
 import org.eclipse.bigiot.lib.exceptions.AccessToNonSubscribedOfferingException;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingQueryException;
 import org.eclipse.bigiot.lib.feed.AccessFeed;
+import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
-import org.eclipse.bigiot.lib.model.Information;
+import org.eclipse.bigiot.lib.model.RDFType;
+import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.model.Price.Euros;
 import org.eclipse.bigiot.lib.offering.AccessParameters;
 import org.eclipse.bigiot.lib.offering.AccessResponse;
@@ -36,36 +37,31 @@ import org.eclipse.bigiot.lib.query.OfferingQuery;
 import org.joda.time.Duration;
 
 public class ExampleConsumer {
-	
-	private static final String MARKETPLACE_URI = "https://market.big-iot.org";
-	
-	private static final String CONSUMER_ID	    = "TestOrganization-TestConsumer";
-	private static final String CONSUMER_SECRET = "UDiR00ysTbqcOLRMn6dTTQ==";
-	
+		
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IncompleteOfferingQueryException, IOException, AccessToNonSubscribedOfferingException, AccessToNonActivatedOfferingException {
-		
+	    
+	    // Load example properties file
+        BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
+
 		// Initialize consumer with Consumer ID and Marketplace URL
-		Consumer consumer = new Consumer(CONSUMER_ID, MARKETPLACE_URI);
+		Consumer consumer = Consumer.create(prop.CONSUMER_ID, prop.MARKETPLACE_URI)
+		                            .authenticate(prop.CONSUMER_SECRET);
 		
-//		consumer.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
-//		consumer.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
-		
-		// Authenticate consumer on the marketplace
-		consumer.authenticate(CONSUMER_SECRET);
-				
 	    // Construct Offering Query incrementally
 		OfferingQuery query = OfferingQuery.create("RandomNumberQuery")
-				.withInformation(new Information("Random Number Query", "bigiot:RandomNumber"))
-	    		//.addOutputData("value", new RDFType("schema:random"), ValueType.NUMBER)
-				//.inRegion(RegionFilter.city(""))
+				.withName("Random Number Query")
+                .withCategory("urn:proposed:RandomValues")
+                //.addInputData("longitude", new RDFType("schema:longitude"))
+                //.addInputData("latitude", new RDFType("schema:latitude"))
+                .addOutputData(new RDFType("proposed:randomValue"), ValueType.NUMBER)
+                //.inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
+                //.withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
 				.withPricingModel(PricingModel.PER_ACCESS)
 				.withMaxPrice(Euros.amount(0.002))             
 				.withLicenseType(LicenseType.OPEN_DATA_LICENSE);
 
-		// Discover available offerings based on Offering Query
-		CompletableFuture<List<SubscribableOfferingDescription>> listFuture = consumer.discover(query);
-		listFuture.thenApply(SubscribableOfferingDescription::showOfferingDescriptions);			
-		List<SubscribableOfferingDescription> list = listFuture.get();	
+		// Discover available offerings based on Offering Query		
+		List<SubscribableOfferingDescription> list = consumer.discover(query).get();	
 		
 		// Select Offering that has been offered by a local provider instance 
 		SubscribableOfferingDescription selectedOfferingDescription = list.get(0); 
@@ -73,8 +69,7 @@ public class ExampleConsumer {
 		if (selectedOfferingDescription != null) { 
 			
 			// Subscribe to a selected OfferingDescription (if successful, returns accessible Offering instance)		
-			CompletableFuture<Offering> offeringFuture = selectedOfferingDescription.subscribe();
-			Offering offering = offeringFuture.get();
+			Offering offering = selectedOfferingDescription.subscribe().get();
 	
 			// Prepare Access Parameters
 			AccessParameters accessParameters = AccessParameters.create();
