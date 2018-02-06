@@ -10,6 +10,7 @@ The README.md of each sub-project explains how to use/run/test the corresponding
 ### Simple example projects or project template:
 
 **1. Java Example Provider:** Creates a BIG IoT Provider service that provides random numbers as an Offering on the Marketplace 
+
 **2. Java Example Consumer:** Creates a BIG IoT Consumer application that queries random number Offerings, subscribes to an Offering, and access the random numer service on the corresponding BIG-IoT Provider.
 
 ### Further example projects to 
