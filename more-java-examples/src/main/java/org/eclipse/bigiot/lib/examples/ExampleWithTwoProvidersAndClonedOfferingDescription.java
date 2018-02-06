@@ -22,7 +22,6 @@ import java.util.Scanner;
 
 import org.eclipse.bigiot.lib.ProviderSpark;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingDescriptionException;
-import org.eclipse.bigiot.lib.exceptions.InvalidOfferingException;
 import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
 import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
@@ -35,7 +34,6 @@ import org.eclipse.bigiot.lib.model.RDFType;
 import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
-import org.eclipse.bigiot.lib.offering.RegisteredOffering;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
 import org.eclipse.bigiot.lib.serverwrapper.BigIotHttpResponse;
 import org.joda.time.DateTime;
@@ -45,15 +43,12 @@ import org.json.JSONObject;
 /**
  * Example for using BIG IoT API as a provider.
  */
-public class ExampleProvider {
+public class ExampleWithTwoProvidersAndClonedOfferingDescription {
 
     private static AccessRequestHandler accessCallback = new AccessRequestHandler() {
         @Override
         public BigIotHttpResponse processRequestHandler(OfferingDescription offeringDescription,
                 Map<String, Object> inputData, String subscriptionId, String consumerInfo) {
-
-            BigIotHttpResponse errorResponse = BigIotHttpResponse.error().withBody("{\"status\":\"error\"}")
-                    .withStatus(422).asJsonType();
 
             double longitude = 41.0;
             if (inputData.containsKey("longitude"))
@@ -74,30 +69,32 @@ public class ExampleProvider {
             }
 
             return BigIotHttpResponse.okay().withBody(jsonArray);
+
+            // return BigIotHttpResponse errorResponse = BigIotHttpResponse.error()
+            //          .withBody("{\"status\":\"error\"}")
+            //          .withStatus(422).asJsonType();
         }
     };
 
     public static void main(String[] args)
-            throws IncompleteOfferingDescriptionException, IOException, NotRegisteredException, InvalidOfferingException {
+            throws IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
 
-        // Load example properties file
+     // Load example properties file
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
         // Initialize provider with provider id and Marketplace URI
-        ProviderSpark provider = ProviderSpark.create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME,
-                prop.PROVIDER_PORT);
-
-        // provider.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
-        // provider.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
-
-        // Authenticate provider on the marketplace
-        provider.authenticate(prop.PROVIDER_SECRET);
-
+        ProviderSpark provider1 = ProviderSpark.create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME,
+                prop.PROVIDER_PORT).authenticate(prop.PROVIDER_SECRET);
+        
+        // Initialize provider with provider id and Marketplace URI
+        ProviderSpark provider2 = ProviderSpark.create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME,
+                prop.PROVIDER_PORT).authenticate(prop.PROVIDER_SECRET);
+        
         // Construct Offering Description of your Offering incrementally
-        RegistrableOfferingDescription offeringDescription =
-                // providr.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-DemoParkingOffering");
-                OfferingDescription.createOfferingDescription("DemoParkingOffering")
-                        .withName("Demo Parking Offering")
+        RegistrableOfferingDescription offeringDescription1 =
+                // provider.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-Manual_Offering_Test")
+                OfferingDescription.createOfferingDescription("DemoParkingOfferingWithClone1")
+                        .withName("Demo Parking Offering With Clone")                        
                         .withCategory("urn:big-iot:ParkingSpaceCategory")
                         .withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
                         .inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
@@ -111,11 +108,23 @@ public class ExampleProvider {
                         .addOutputData("status", new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
                         .withPrice(Euros.amount(0.02)).withPricingModel(PricingModel.PER_ACCESS)
                         .withLicenseType(LicenseType.CREATIVE_COMMONS);
-    
-        Endpoints endpoints = Endpoints.create(offeringDescription)
-                                       .withAccessRequestHandler(accessCallback);
 
-        RegisteredOffering offering = provider.register(offeringDescription, endpoints);
+        Endpoints endpoints1 = Endpoints.create(offeringDescription1)
+                .withRoute("1st-route")
+                .withAccessRequestHandler(accessCallback);
+
+        provider1.register(offeringDescription1, endpoints1);
+        
+        // 2nd Offering Description, based on initial one 
+   
+        RegistrableOfferingDescription offeringDescription2 = offeringDescription1
+                .cloneForOtherProvider("DemoParkingOfferingWithClone2");
+
+        Endpoints endpoints2 = Endpoints.create(offeringDescription2)
+                .withRoute("2nd-route")
+                .withAccessRequestHandler(accessCallback);
+        
+        provider2.register(offeringDescription2, endpoints2);
 
         // Run until user input is obtained
         System.out.println(">>>>>>  Terminate ExampleProvider by pressing ENTER  <<<<<<");
@@ -124,10 +133,12 @@ public class ExampleProvider {
         keyboard.close();
 
         // Deregister your offering form Marketplace
-        offering.deregister();
+        provider1.deregister(offeringDescription1);
+        provider2.deregister(offeringDescription2);
 
         // Terminate provider instance
-        provider.terminate();
+        provider1.terminate();
+        provider2.terminate();
 
     }
 

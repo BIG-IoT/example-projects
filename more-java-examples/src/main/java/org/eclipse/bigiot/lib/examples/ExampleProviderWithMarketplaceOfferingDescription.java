@@ -35,7 +35,6 @@ import org.eclipse.bigiot.lib.model.RDFType;
 import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
-import org.eclipse.bigiot.lib.offering.RegisteredOffering;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
 import org.eclipse.bigiot.lib.serverwrapper.BigIotHttpResponse;
 import org.joda.time.DateTime;
@@ -45,7 +44,7 @@ import org.json.JSONObject;
 /**
  * Example for using BIG IoT API as a provider.
  */
-public class ExampleProvider {
+public class ExampleProviderWithMarketplaceOfferingDescription {
 
     private static AccessRequestHandler accessCallback = new AccessRequestHandler() {
         @Override
@@ -94,28 +93,16 @@ public class ExampleProvider {
         provider.authenticate(prop.PROVIDER_SECRET);
 
         // Construct Offering Description of your Offering incrementally
-        RegistrableOfferingDescription offeringDescription =
-                // providr.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-DemoParkingOffering");
-                OfferingDescription.createOfferingDescription("DemoParkingOffering")
-                        .withName("Demo Parking Offering")
-                        .withCategory("urn:big-iot:ParkingSpaceCategory")
-                        .withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
-                        .inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
-                        // .inCity("Barcelona")
-                        .addInputData("longitude", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addInputData("latitude", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addInputData("radius", new RDFType("schema:geoRadius"), ValueType.NUMBER)
-                        .addOutputData("lon", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addOutputData("lat", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addOutputData("dist", new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
-                        .addOutputData("status", new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
-                        .withPrice(Euros.amount(0.02)).withPricingModel(PricingModel.PER_ACCESS)
+        RegistrableOfferingDescription offeringDescription = 
+                provider.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-DemoParkingOffering")
+                        .withTimePeriod(new DateTime(2017, 2, 1, 0, 0, 0), new DateTime())
+                        .inRegion(BoundingBox.create(Location.create(42.5, 9.0), Location.create(43.2, 10.0)))
                         .withLicenseType(LicenseType.CREATIVE_COMMONS);
     
         Endpoints endpoints = Endpoints.create(offeringDescription)
                                        .withAccessRequestHandler(accessCallback);
 
-        RegisteredOffering offering = provider.register(offeringDescription, endpoints);
+        provider.register(offeringDescription, endpoints);
 
         // Run until user input is obtained
         System.out.println(">>>>>>  Terminate ExampleProvider by pressing ENTER  <<<<<<");
@@ -124,7 +111,7 @@ public class ExampleProvider {
         keyboard.close();
 
         // Deregister your offering form Marketplace
-        offering.deregister();
+        provider.deregister(offeringDescription);
 
         // Terminate provider instance
         provider.terminate();

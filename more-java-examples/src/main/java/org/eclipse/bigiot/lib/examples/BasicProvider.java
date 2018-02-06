@@ -1,10 +1,17 @@
 /**
- *      Copyright (c) 2017 by Contributors of the BIG IoT Project Consortium (see below).
- *      All rights reserved.
+ * Copyright (c) 2016-2017 in alphabetical order:
+ * Bosch Software Innovations GmbH, Robert Bosch GmbH, Siemens AG
  *
- *      This source code is licensed under the MIT license found in the
- *      LICENSE file in the root directory of this source tree.
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
  *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *    Denis Kramer     (Bosch Software Innovations GmbH)
+ *    Stefan Schmid    (Robert Bosch GmbH)
+ *    Andreas Ziller   (Siemens AG)
  */
 package org.eclipse.bigiot.lib.examples;
 
@@ -19,12 +26,16 @@ import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
 import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
+import org.eclipse.bigiot.lib.model.BoundingBox;
+import org.eclipse.bigiot.lib.model.Location;
 import org.eclipse.bigiot.lib.model.Price.Euros;
 import org.eclipse.bigiot.lib.model.RDFType;
 import org.eclipse.bigiot.lib.model.ValueType;
+import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
 import org.eclipse.bigiot.lib.serverwrapper.BigIotHttpResponse;
+import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -37,24 +48,18 @@ public class BasicProvider {
     private static final String PROVIDER_ID = "TestOrganization-TestProvider";
     private static final String PROVIDER_SECRET = "C3-gsQFATuiIE36QiUPgOA==";
 
-    private static AccessRequestHandler accessCallbackDummy = new AccessRequestHandler() {
+    private static AccessRequestHandler accessCallback = new AccessRequestHandler() {
         @Override
         public BigIotHttpResponse processRequestHandler(OfferingDescription offeringDescription,
-                Map<String, Object> inputData, String subscriberId, String consumerInfo) {
+                Map<String, Object> inputData, String subscriptionId, String consumerInfo) {
 
-            double longitude;
-            double latitude;
+            double longitude = 41.0;
+            if (inputData.containsKey("longitude"))
+                longitude = Double.parseDouble((String) inputData.get("longitude"));
 
-            BigIotHttpResponse errorResponse = BigIotHttpResponse.error().withBody("{\"status\":\"error\"}")
-                    .withStatus(422).asJsonType();
-
-            if (!inputData.containsKey("longitude"))
-                return errorResponse;
-            longitude = new Double((String) inputData.get("longitude"));
-
-            if (!inputData.containsKey("latitude"))
-                return errorResponse;
-            latitude = new Double((String) inputData.get("latitude"));
+            double latitude = 9.0;
+            if (inputData.containsKey("latitude"))
+                latitude = Double.parseDouble((String) inputData.get("latitude"));
 
             Random r = new Random();
             JSONArray jsonArray = new JSONArray();
@@ -67,6 +72,10 @@ public class BasicProvider {
             }
 
             return BigIotHttpResponse.okay().withBody(jsonArray);
+
+            // return BigIotHttpResponse errorResponse = BigIotHttpResponse.error()
+            //          .withBody("{\"status\":\"error\"}")
+            //          .withStatus(422).asJsonType();
         }
     };
 
@@ -74,19 +83,18 @@ public class BasicProvider {
             throws IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
 
         // Initialize provider with provider id and Marketplace URI
-        ProviderSpark provider = ProviderSpark.create(PROVIDER_ID, MARKETPLACE_URI, "localhost", 9003);
-
-        // provider.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
-        // provider.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
-
-        // Authenticate provider on the marketplace
-        provider.authenticate(PROVIDER_SECRET);
+        ProviderSpark provider = ProviderSpark.create(PROVIDER_ID, MARKETPLACE_URI, "localhost", 9003)
+                                              .authenticate(PROVIDER_SECRET);
 
         // Construct Offering Description of your Offering incrementally
         RegistrableOfferingDescription offeringDescription =
                 // provider.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-Manual_Offering_Test")
-                provider.createOfferingDescription("ParkingSpotProvider")
-                        .withInformation("Demo Parking Offering", new RDFType("bigiot:Parking"))
+                provider.createOfferingDescription("BasicDemoParkingSpotOffering")
+                        .withName("Basic Demo Parking Offering")
+                        .withCategory("urn:big-iot:ParkingSpaceCategory")
+                        .inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
+                        // .inRegion("Germany")
+                        .withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
                         .addInputData("longitude", new RDFType("schema:longitude"), ValueType.NUMBER)
                         .addInputData("latitude", new RDFType("schema:latitude"), ValueType.NUMBER)
                         .addInputData("radius", new RDFType("schema:geoRadius"), ValueType.NUMBER)
@@ -94,14 +102,14 @@ public class BasicProvider {
                         .addOutputData("lat", new RDFType("schema:latitude"), ValueType.NUMBER)
                         .addOutputData("dist", new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
                         .addOutputData("status", new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
-                        // .inCity("Barcelona")
                         .withPrice(Euros.amount(0.001)).withPricingModel(PricingModel.PER_ACCESS)
-                        .withLicenseType(LicenseType.OPEN_DATA_LICENSE)
-                        // Below is actually Offering specific
-                        .withAccessRequestHandler(accessCallbackDummy);
+                        .withLicenseType(LicenseType.OPEN_DATA_LICENSE);
 
-        provider.register(offeringDescription);
+        Endpoints endpoints = Endpoints.create(offeringDescription)
+                                       .withAccessRequestHandler(accessCallback);
 
+        provider.register(offeringDescription, endpoints);
+        
         // Run until user input is obtained
         System.out.println(">>>>>>  Terminate ExampleProvider by pressing ENTER  <<<<<<");
         Scanner keyboard = new Scanner(System.in);

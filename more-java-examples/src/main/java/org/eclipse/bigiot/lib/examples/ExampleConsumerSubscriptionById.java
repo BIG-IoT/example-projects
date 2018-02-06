@@ -1,44 +1,30 @@
 /**
- *      Copyright (c) 2017 by Contributors of the BIG IoT Project Consortium (see below).
- *      All rights reserved.
+ * Copyright (c) 2016-2017 in alphabetical order:
+ * Bosch Software Innovations GmbH, Robert Bosch GmbH, Siemens AG
  *
- *      This source code is licensed under the MIT license found in the
- *      LICENSE file in the root directory of this source tree.
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
  *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *    Denis Kramer     (Bosch Software Innovations GmbH)
+ *    Stefan Schmid    (Robert Bosch GmbH)
+ *    Andreas Ziller   (Siemens AG)
  */
 package org.eclipse.bigiot.lib.examples;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.bigiot.lib.Consumer;
-import org.eclipse.bigiot.lib.examples.types.MyParkingResultPojo;
 import org.eclipse.bigiot.lib.examples.types.MyParkingResultPojoAnnotated;
-import org.eclipse.bigiot.lib.exceptions.AccessToNonActivatedOfferingException;
-import org.eclipse.bigiot.lib.exceptions.AccessToNonSubscribedOfferingException;
-import org.eclipse.bigiot.lib.exceptions.IllegalEndpointException;
-import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingDescriptionException;
-import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingQueryException;
-import org.eclipse.bigiot.lib.exceptions.InvalidOfferingException;
-import org.eclipse.bigiot.lib.feed.AccessFeed;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
-import org.eclipse.bigiot.lib.misc.Helper;
-import org.eclipse.bigiot.lib.model.BigIotTypes;
-import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
-import org.eclipse.bigiot.lib.model.Information;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.ValueType;
-import org.eclipse.bigiot.lib.model.Price.Euros;
 import org.eclipse.bigiot.lib.offering.AccessParameters;
 import org.eclipse.bigiot.lib.offering.AccessResponse;
 import org.eclipse.bigiot.lib.offering.Offering;
-import org.eclipse.bigiot.lib.offering.OfferingSelector;
-import org.eclipse.bigiot.lib.offering.SubscribableOfferingDescription;
-import org.eclipse.bigiot.lib.offering.mapping.OutputMapping;
-import org.eclipse.bigiot.lib.query.OfferingQuery;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,9 +40,8 @@ public class ExampleConsumerSubscriptionById {
     /*
      * Main Routine
      */
-    public static void main(String[] args) throws InterruptedException, ExecutionException, IOException,
-            IllegalEndpointException, IncompleteOfferingDescriptionException, InvalidOfferingException {
-        
+    public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
+
         // Load example properties file
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
@@ -65,13 +50,15 @@ public class ExampleConsumerSubscriptionById {
                                     .authenticate(prop.CONSUMER_SECRET);
 
         // Subscribe to Offering by OfferingId
-        Offering offering = consumer.subscribeByOfferingId("TestOrganization-TestProvider-ParkingSpotProvider").get();
+        Offering offering = consumer.subscribeByOfferingId("TestOrganization-TestProvider-DemoParkingOffering").get();
 
+        // Define Input Data as access parameters
+        AccessParameters accessParameters = AccessParameters.create();
+                 // .addRdfTypeValue("schema:latitude", 42.0)
+                 // .addRdfTypeValue("schema:longitude", 9.0);
+        
         // Access Offering one-time with Access Parameters (input data)
-        AccessResponse response = offering
-                .accessOneTime(AccessParameters.create().addRdfTypeValue("schema:latitude", 42.0)
-                        .addRdfTypeValue("schema:longitude", 9.0).addRdfTypeValue("schema:geoRadius", 777))
-                .get();
+        AccessResponse response = offering.accessOneTime(accessParameters).get();
 
         logger.info("One time Offering access: {} elements received", response.asJsonNode().size());
 

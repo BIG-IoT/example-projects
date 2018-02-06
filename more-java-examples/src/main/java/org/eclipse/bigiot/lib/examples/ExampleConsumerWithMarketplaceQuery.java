@@ -54,9 +54,9 @@ import org.slf4j.LoggerFactory;
  * 
  * 
  */
-public class ExampleConsumer {
+public class ExampleConsumerWithMarketplaceQuery {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExampleConsumer.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExampleConsumerWithMarketplaceQuery.class);
 
     /*
      * Main Routine
@@ -70,47 +70,22 @@ public class ExampleConsumer {
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
         // Initialize Consumer with Consumer ID and marketplace URL
-        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI);
+        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI)
+                                    .authenticate(prop.CONSUMER_SECRET);
 
-        // consumer.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
-        // consumer.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 
-        // Authenticate provider on the marketplace
-        consumer.authenticate(prop.CONSUMER_SECRET);
+        // Discover matching offerings (by Query ID) based on a pre-defined Query on the Marketplace 
+        List<SubscribableOfferingDescription> offeringDescriptionList = 
+                consumer.discoverById("TestOrganization-TestConsumer-DemoParkingQuery").get();
 
-        // Construct Offering search query incrementally/
-        OfferingQuery query = OfferingQuery.create("DemoParkingQuery")
-                .withName("Demo Parking Query")
-                .withCategory("urn:big-iot:ParkingSpaceCategory")
-                .withTimePeriod(TimePeriod.create(new DateTime(1999, 1, 1, 0, 0, 0), new DateTime()))
-                .inRegion(BoundingBox.create(Location.create(40.0, 8.0), Location.create(45.0, 12.0)))
-                // .inCity("Barcelona")
-                .addInputData(new RDFType("schema:longitude"), ValueType.NUMBER)
-                .addInputData(new RDFType("schema:latitude"), ValueType.NUMBER)
-                // .addInputData(new RDFType("schema:geoRadius"), ValueType.NUMBER)
-                .addOutputData(new RDFType("schema:longitude"), ValueType.NUMBER)
-                .addOutputData(new RDFType("schema:latitude"), ValueType.NUMBER)
-                // .addOutputData(new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
-                .addOutputData(new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
-                .withPricingModel(BigIotTypes.PricingModel.PER_ACCESS).withMaxPrice(Euros.amount(0.5))
-                // .withPricingModel(BigIotTypes.PricingModel.FREE)
-                .withLicenseType(LicenseType.CREATIVE_COMMONS);
-
-        SubscribableOfferingDescription offeringDescription = consumer.discover(query)
-                .thenApply(l -> OfferingSelector.create().onlyLocalhost().cheapest().mostPermissive().select(l))
-                .get();
-
-        // Alternatively you can use discover with callbacks
-        // consumer.discover(query,(q,l)-> {
-        //      log("Discovery with callback");
-        //      SubscribableOfferingDescription.showOfferingDescriptions(list);
-        // });
-
-        if (offeringDescription == null) {
+        if (offeringDescriptionList.isEmpty()) {
             logger.error("Couldn't find any offering. Are sure that one is registered? It could be expired meanwhile");
             System.exit(1);
         }
-
+        
+        // Select 1st offering in list
+        SubscribableOfferingDescription offeringDescription = offeringDescriptionList.get(0);
+       
         // Instantiation of Offering Access objects via subscribe
         Offering offering = offeringDescription.subscribe().get();
 
@@ -118,7 +93,6 @@ public class ExampleConsumer {
         AccessParameters accessParameters = AccessParameters.create()
                 .addRdfTypeValue("schema:latitude", 42.0)
                 .addRdfTypeValue("schema:longitude", 9.0);
-        //      .addNameValue("accessSessionId", 123456789);
 
         CompletableFuture<AccessResponse> response = offering.accessOneTime(accessParameters);
 
@@ -131,46 +105,6 @@ public class ExampleConsumer {
         // Mapping the response automatically to your pojo
         List<MyParkingResultPojoAnnotated> parkingResult = response.get().map(MyParkingResultPojoAnnotated.class);
         parkingResult.forEach(t -> logger.info("Record: " + t.toString()));
-
-        // Alternatively you can manually map your response
-        List parkingResult2 = response.get().map(MyParkingResultPojo.class,
-                OutputMapping.create().addTypeMapping("schema:longitude", "longitude")
-                        .addTypeMapping("schema:latitude", "latitude")
-                        .addTypeMapping("datex:distanceFromParkingSpace", "distance")
-                        .addTypeMapping("datex:parkingSpaceStatus", "status"));
-
-        Thread.sleep(3L * Helper.Second);
-
-        Duration feedDuration = Duration.standardHours(1);
-        Duration feedInterval = Duration.standardSeconds(2);
-
-        // Create a data feed using callbacks for the received results
-        AccessFeed accessFeed = offering.accessContinuous(accessParameters, feedDuration.getMillis(),
-                feedInterval.getMillis(),
-                (f, r) -> logger.info("Incoming feed data: " + r.asJsonNode().size() + " elements received. "),
-                (f, r) -> logger.info("Feed operation failed"));
-
-        Thread.sleep(10L * Helper.Second);
-
-        // Pausing Feed
-        accessFeed.stop();
-
-        // Printing feed status
-        logger.info(accessFeed.getStatus().toString());
-
-        Thread.sleep(5L * Helper.Second);
-
-        // Resuming Feed
-        accessFeed.resume();
-
-        Thread.sleep(5L * Helper.Second);
-
-        // Setting a new lifetime for the feed
-        accessFeed.setLifetimeSeconds(5000);
-
-        Thread.sleep(8L * Helper.Second);
-
-        accessFeed.stop();
 
         // Unsubscribe Offering
         offering.unsubscribe();
