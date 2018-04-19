@@ -9,7 +9,6 @@
  *	- Robert Bosch GmbH 
  *	    > Stefan Schmid (stefan.schmid@bosch.com)
  */
-
 package org.bigiot.examples;
 
 import java.io.IOException;
