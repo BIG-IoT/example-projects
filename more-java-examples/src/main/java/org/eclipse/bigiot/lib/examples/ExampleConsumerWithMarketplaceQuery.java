@@ -21,31 +21,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.bigiot.lib.Consumer;
-import org.eclipse.bigiot.lib.examples.types.MyParkingResultPojo;
 import org.eclipse.bigiot.lib.examples.types.MyParkingResultPojoAnnotated;
 import org.eclipse.bigiot.lib.exceptions.AccessToNonActivatedOfferingException;
 import org.eclipse.bigiot.lib.exceptions.AccessToNonSubscribedOfferingException;
 import org.eclipse.bigiot.lib.exceptions.IncompleteOfferingQueryException;
-import org.eclipse.bigiot.lib.feed.AccessFeed;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
-import org.eclipse.bigiot.lib.misc.Helper;
-import org.eclipse.bigiot.lib.model.BigIotTypes;
-import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
-import org.eclipse.bigiot.lib.model.BoundingBox;
-import org.eclipse.bigiot.lib.model.Location;
-import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.TimePeriod;
-import org.eclipse.bigiot.lib.model.ValueType;
-import org.eclipse.bigiot.lib.offering.AccessParameters;
 import org.eclipse.bigiot.lib.offering.AccessResponse;
 import org.eclipse.bigiot.lib.offering.Offering;
-import org.eclipse.bigiot.lib.offering.OfferingSelector;
 import org.eclipse.bigiot.lib.offering.SubscribableOfferingDescription;
-import org.eclipse.bigiot.lib.offering.mapping.OutputMapping;
-import org.eclipse.bigiot.lib.query.OfferingQuery;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
+import org.eclipse.bigiot.lib.offering.parameters.AccessParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,28 +54,25 @@ public class ExampleConsumerWithMarketplaceQuery {
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
         // Initialize Consumer with Consumer ID and marketplace URL
-        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI)
-                                    .authenticate(prop.CONSUMER_SECRET);
+        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI).authenticate(prop.CONSUMER_SECRET);
 
-
-        // Discover matching offerings (by Query ID) based on a pre-defined Query on the Marketplace 
-        List<SubscribableOfferingDescription> offeringDescriptionList = 
-                consumer.discoverById("TestOrganization-TestConsumer-DemoParkingQuery").get();
+        // Discover matching offerings (by Query ID) based on a pre-defined Query on the Marketplace
+        List<SubscribableOfferingDescription> offeringDescriptionList = consumer
+                .discoverById("TestOrganization-TestConsumer-DemoParkingQuery").get();
 
         if (offeringDescriptionList.isEmpty()) {
             logger.error("Couldn't find any offering. Are sure that one is registered? It could be expired meanwhile");
             System.exit(1);
         }
-        
+
         // Select 1st offering in list
         SubscribableOfferingDescription offeringDescription = offeringDescriptionList.get(0);
-       
+
         // Instantiation of Offering Access objects via subscribe
         Offering offering = offeringDescription.subscribe().get();
 
         // Prepare access parameters
-        AccessParameters accessParameters = AccessParameters.create()
-                .addRdfTypeValue("schema:latitude", 42.0)
+        AccessParameters accessParameters = AccessParameters.create().addRdfTypeValue("schema:latitude", 42.0)
                 .addRdfTypeValue("schema:longitude", 9.0);
 
         CompletableFuture<AccessResponse> response = offering.accessOneTime(accessParameters);

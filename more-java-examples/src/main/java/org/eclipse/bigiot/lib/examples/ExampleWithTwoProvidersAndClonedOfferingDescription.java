@@ -27,11 +27,10 @@ import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
+import org.eclipse.bigiot.lib.model.BigIotTypes.ValueType;
 import org.eclipse.bigiot.lib.model.BoundingBox;
 import org.eclipse.bigiot.lib.model.Location;
 import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
@@ -71,59 +70,58 @@ public class ExampleWithTwoProvidersAndClonedOfferingDescription {
             return BigIotHttpResponse.okay().withBody(jsonArray);
 
             // return BigIotHttpResponse errorResponse = BigIotHttpResponse.error()
-            //          .withBody("{\"status\":\"error\"}")
-            //          .withStatus(422).asJsonType();
+            // .withBody("{\"status\":\"error\"}")
+            // .withStatus(422).asJsonType();
         }
     };
 
     public static void main(String[] args)
             throws IncompleteOfferingDescriptionException, IOException, NotRegisteredException {
 
-     // Load example properties file
+        // Load example properties file
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
         // Initialize provider with provider id and Marketplace URI
-        ProviderSpark provider1 = ProviderSpark.create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME,
-                prop.PROVIDER_PORT).authenticate(prop.PROVIDER_SECRET);
-        
+        ProviderSpark provider1 = ProviderSpark
+                .create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME, prop.PROVIDER_PORT)
+                .authenticate(prop.PROVIDER_SECRET);
+
         // Initialize provider with provider id and Marketplace URI
-        ProviderSpark provider2 = ProviderSpark.create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME,
-                prop.PROVIDER_PORT).authenticate(prop.PROVIDER_SECRET);
-        
+        ProviderSpark provider2 = ProviderSpark
+                .create(prop.PROVIDER_ID, prop.MARKETPLACE_URI, prop.PROVIDER_DNS_NAME, prop.PROVIDER_PORT)
+                .authenticate(prop.PROVIDER_SECRET);
+
         // Construct Offering Description of your Offering incrementally
         RegistrableOfferingDescription offeringDescription1 =
                 // provider.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-Manual_Offering_Test")
                 OfferingDescription.createOfferingDescription("DemoParkingOfferingWithClone1")
-                        .withName("Demo Parking Offering With Clone")                        
-                        .withCategory("urn:big-iot:ParkingSpaceCategory")
+                        .withName("Demo Parking Offering With Clone").withCategory("urn:big-iot:ParkingSpaceCategory")
                         .withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
                         .inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
                         // .inCity("Barcelona")
-                        .addInputData("longitude", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addInputData("latitude", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addInputData("radius", new RDFType("schema:geoRadius"), ValueType.NUMBER)
-                        .addOutputData("lon", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addOutputData("lat", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addOutputData("dist", new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
-                        .addOutputData("status", new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
+                        .addInputData("longitude", "schema:longitude", ValueType.NUMBER)
+                        .addInputData("latitude", "schema:latitude", ValueType.NUMBER)
+                        .addInputData("radius", "schema:geoRadius", ValueType.NUMBER)
+                        .addOutputData("lon", "schema:longitude", ValueType.NUMBER)
+                        .addOutputData("lat", "schema:latitude", ValueType.NUMBER)
+                        .addOutputData("dist", "datex:distanceFromParkingSpace", ValueType.NUMBER)
+                        .addOutputData("status", "datex:parkingSpaceStatus", ValueType.TEXT)
                         .withPrice(Euros.amount(0.02)).withPricingModel(PricingModel.PER_ACCESS)
                         .withLicenseType(LicenseType.CREATIVE_COMMONS);
 
-        Endpoints endpoints1 = Endpoints.create(offeringDescription1)
-                .withRoute("1st-route")
+        Endpoints endpoints1 = Endpoints.create(offeringDescription1).withRoute("1st-route")
                 .withAccessRequestHandler(accessCallback);
 
         provider1.register(offeringDescription1, endpoints1);
-        
-        // 2nd Offering Description, based on initial one 
-   
+
+        // 2nd Offering Description, based on initial one
+
         RegistrableOfferingDescription offeringDescription2 = offeringDescription1
                 .cloneForOtherProvider("DemoParkingOfferingWithClone2");
 
-        Endpoints endpoints2 = Endpoints.create(offeringDescription2)
-                .withRoute("2nd-route")
+        Endpoints endpoints2 = Endpoints.create(offeringDescription2).withRoute("2nd-route")
                 .withAccessRequestHandler(accessCallback);
-        
+
         provider2.register(offeringDescription2, endpoints2);
 
         // Run until user input is obtained

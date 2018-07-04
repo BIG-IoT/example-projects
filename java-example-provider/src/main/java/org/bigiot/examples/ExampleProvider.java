@@ -24,11 +24,10 @@ import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
+import org.eclipse.bigiot.lib.model.BigIotTypes.ValueType;
 import org.eclipse.bigiot.lib.model.BoundingBox;
 import org.eclipse.bigiot.lib.model.Location;
 import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
@@ -52,7 +51,7 @@ public class ExampleProvider {
 			double longitude = 41.0;
             if (inputData.containsKey("longitude"))
                 longitude = Double.parseDouble((String) inputData.get("longitude"));
-
+                
             double latitude = 9.0;
             if (inputData.containsKey("latitude"))
                 latitude = Double.parseDouble((String) inputData.get("latitude"));
@@ -86,10 +85,9 @@ public class ExampleProvider {
 	            OfferingDescription.createOfferingDescription("RandomNumberOffering")
     	    		.withName("Random Number Offering")
     	    		.withCategory("urn:proposed:RandomValues")
-    	    		//.addInputData("longitude", new RDFType("schema:longitude"))
-    	    		//.addInputData("latitude", new RDFType("schema:latitude"))
-    	    		.addOutputData("value", new RDFType("proposed:randomValue"), ValueType.NUMBER)
-    	            .addOutputData("timestamp", new RDFType("schema:datePublished"), ValueType.NUMBER)
+    	    		// .addInputData("latitude", "http://schema.org/latitude", ValueType.NUMBER)
+    	    		.addOutputData("value", "proposed:randomValue", ValueType.NUMBER)
+    	            .addOutputData("timestamp", "schema:datePublished", ValueType.NUMBER)
     	            //.inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
                     //.withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
     	    		.withPrice(Euros.amount(0.001))

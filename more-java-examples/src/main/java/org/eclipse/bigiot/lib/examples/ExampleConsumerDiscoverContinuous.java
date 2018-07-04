@@ -30,17 +30,16 @@ import org.eclipse.bigiot.lib.handlers.DiscoverResponseErrorHandler;
 import org.eclipse.bigiot.lib.handlers.DiscoverResponseHandler;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes;
+import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
+import org.eclipse.bigiot.lib.model.BigIotTypes.ValueType;
 import org.eclipse.bigiot.lib.model.BoundingBox;
 import org.eclipse.bigiot.lib.model.Location;
-import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.model.RDFType;
 import org.eclipse.bigiot.lib.model.TimePeriod;
-import org.eclipse.bigiot.lib.model.ValueType;
-import org.eclipse.bigiot.lib.offering.AccessParameters;
 import org.eclipse.bigiot.lib.offering.AccessResponse;
 import org.eclipse.bigiot.lib.offering.Offering;
 import org.eclipse.bigiot.lib.offering.SubscribableOfferingDescription;
+import org.eclipse.bigiot.lib.offering.parameters.AccessParameters;
 import org.eclipse.bigiot.lib.query.IOfferingQuery;
 import org.eclipse.bigiot.lib.query.OfferingQuery;
 import org.joda.time.DateTime;
@@ -106,28 +105,24 @@ public class ExampleConsumerDiscoverContinuous {
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
         // Initialize Consumer with Consumer ID and marketplace URL
-        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI)
-                                    .authenticate(prop.CONSUMER_SECRET);
+        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI).authenticate(prop.CONSUMER_SECRET);
 
         // Construct Offering search query incrementally
-        
+
         OfferingQuery query = OfferingQuery.create("DemoParkingQueryContinuous")
-                .withName("Demo Parking Query Continuous")
-                .withCategory("urn:big-iot:ParkingSpaceCategory")
+                .withName("Demo Parking Query Continuous").withCategory("urn:big-iot:ParkingSpaceCategory")
                 .withTimePeriod(TimePeriod.create(new DateTime(1999, 1, 1, 0, 0, 0), new DateTime()))
                 // .inCity("Barcelona")
                 .inRegion(BoundingBox.create(Location.create(40.0, 8.0), Location.create(45.0, 12.0)))
-                .addInputData(new RDFType("schema:longitude"), ValueType.NUMBER)
-                .addInputData(new RDFType("schema:latitude"), ValueType.NUMBER)
-                // .addInputData(new RDFType("schema:geoRadius"), ValueType.NUMBER)
-                .addOutputData(new RDFType("schema:longitude"), ValueType.NUMBER)
-                .addOutputData(new RDFType("schema:latitude"), ValueType.NUMBER)
-                // .addOutputData(new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
-                .addOutputData(new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
+                .addInputData("schema:longitude", ValueType.NUMBER).addInputData("schema:latitude", ValueType.NUMBER)
+                // .addInputData("schema:geoRadius", ValueType.NUMBER)
+                .addOutputData("schema:longitude", ValueType.NUMBER).addOutputData("schema:latitude", ValueType.NUMBER)
+                // .addOutputData("datex:distanceFromParkingSpace", ValueType.NUMBER)
+                .addOutputData("datex:parkingSpaceStatus", ValueType.TEXT)
                 .withPricingModel(BigIotTypes.PricingModel.PER_ACCESS).withMaxPrice(Euros.amount(0.5))
                 // .withPricingModel(BigIotTypes.PricingModel.FREE)
                 .withLicenseType(LicenseType.CREATIVE_COMMONS);
-        
+
         consumer.discoverContinous(query, discoverResponseHandler, discoverResponseErrorHandler, 10);
 
         // Run until user input is obtained
