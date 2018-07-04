@@ -31,18 +31,17 @@ import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.misc.Helper;
 import org.eclipse.bigiot.lib.model.BigIotTypes;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
+import org.eclipse.bigiot.lib.model.BigIotTypes.ValueType;
 import org.eclipse.bigiot.lib.model.BoundingBox;
 import org.eclipse.bigiot.lib.model.Location;
 import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.model.RDFType;
 import org.eclipse.bigiot.lib.model.TimePeriod;
-import org.eclipse.bigiot.lib.model.ValueType;
-import org.eclipse.bigiot.lib.offering.AccessParameters;
 import org.eclipse.bigiot.lib.offering.AccessResponse;
 import org.eclipse.bigiot.lib.offering.Offering;
 import org.eclipse.bigiot.lib.offering.OfferingSelector;
 import org.eclipse.bigiot.lib.offering.SubscribableOfferingDescription;
 import org.eclipse.bigiot.lib.offering.mapping.OutputMapping;
+import org.eclipse.bigiot.lib.offering.parameters.AccessParameters;
 import org.eclipse.bigiot.lib.query.OfferingQuery;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -70,40 +69,32 @@ public class ExampleConsumer {
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
         // Initialize Consumer with Consumer ID and marketplace URL
-        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI);
+        Consumer consumer = Consumer.create(prop.CONSUMER_ID, prop.MARKETPLACE_URI);
 
-        // consumer.setProxy("127.0.0.1", 3128); //Enable this line if you are behind a proxy
+        // consumer.setProxy(prop.PROXY, prop.PROXY_PORT); //Enable this line if you are behind a proxy
         // consumer.addProxyBypass("172.17.17.100"); //Enable this line and the addresses for internal hosts
 
         // Authenticate provider on the marketplace
         consumer.authenticate(prop.CONSUMER_SECRET);
 
         // Construct Offering search query incrementally/
-        OfferingQuery query = OfferingQuery.create("DemoParkingQuery")
-                .withName("Demo Parking Query")
+        OfferingQuery query = OfferingQuery.create("DemoParkingQuery").withName("Demo Parking Query")
                 .withCategory("urn:big-iot:ParkingSpaceCategory")
                 .withTimePeriod(TimePeriod.create(new DateTime(1999, 1, 1, 0, 0, 0), new DateTime()))
                 .inRegion(BoundingBox.create(Location.create(40.0, 8.0), Location.create(45.0, 12.0)))
-                // .inCity("Barcelona")
-                .addInputData(new RDFType("schema:longitude"), ValueType.NUMBER)
-                .addInputData(new RDFType("schema:latitude"), ValueType.NUMBER)
-                // .addInputData(new RDFType("schema:geoRadius"), ValueType.NUMBER)
-                .addOutputData(new RDFType("schema:longitude"), ValueType.NUMBER)
-                .addOutputData(new RDFType("schema:latitude"), ValueType.NUMBER)
-                // .addOutputData(new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
-                .addOutputData(new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
+                .addInputData("schema:longitude", ValueType.NUMBER).addInputData("schema:latitude", ValueType.NUMBER)
+                .addOutputData("schema:longitude", ValueType.NUMBER).addOutputData("schema:latitude", ValueType.NUMBER)
+                .addOutputData("datex:parkingSpaceStatus", ValueType.TEXT)
                 .withPricingModel(BigIotTypes.PricingModel.PER_ACCESS).withMaxPrice(Euros.amount(0.5))
-                // .withPricingModel(BigIotTypes.PricingModel.FREE)
                 .withLicenseType(LicenseType.CREATIVE_COMMONS);
 
         SubscribableOfferingDescription offeringDescription = consumer.discover(query)
-                .thenApply(l -> OfferingSelector.create().onlyLocalhost().cheapest().mostPermissive().select(l))
-                .get();
+                .thenApply(l -> OfferingSelector.create().onlyLocalhost().cheapest().mostPermissive().select(l)).get();
 
         // Alternatively you can use discover with callbacks
         // consumer.discover(query,(q,l)-> {
-        //      log("Discovery with callback");
-        //      SubscribableOfferingDescription.showOfferingDescriptions(list);
+        // log("Discovery with callback");
+        // SubscribableOfferingDescription.showOfferingDescriptions(list);
         // });
 
         if (offeringDescription == null) {
@@ -115,10 +106,9 @@ public class ExampleConsumer {
         Offering offering = offeringDescription.subscribe().get();
 
         // Prepare access parameters
-        AccessParameters accessParameters = AccessParameters.create()
-                .addRdfTypeValue("schema:latitude", 42.0)
+        AccessParameters accessParameters = AccessParameters.create().addRdfTypeValue("schema:latitude", 42.0)
                 .addRdfTypeValue("schema:longitude", 9.0);
-        //      .addNameValue("accessSessionId", 123456789);
+        // .addNameValue("accessSessionId", 123456789);
 
         CompletableFuture<AccessResponse> response = offering.accessOneTime(accessParameters);
 

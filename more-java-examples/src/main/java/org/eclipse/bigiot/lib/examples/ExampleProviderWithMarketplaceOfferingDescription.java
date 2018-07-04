@@ -27,12 +27,8 @@ import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
 import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
-import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
 import org.eclipse.bigiot.lib.model.BoundingBox;
 import org.eclipse.bigiot.lib.model.Location;
-import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
@@ -76,8 +72,8 @@ public class ExampleProviderWithMarketplaceOfferingDescription {
         }
     };
 
-    public static void main(String[] args)
-            throws IncompleteOfferingDescriptionException, IOException, NotRegisteredException, InvalidOfferingException {
+    public static void main(String[] args) throws IncompleteOfferingDescriptionException, IOException,
+            NotRegisteredException, InvalidOfferingException {
 
         // Load example properties file
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
@@ -93,14 +89,13 @@ public class ExampleProviderWithMarketplaceOfferingDescription {
         provider.authenticate(prop.PROVIDER_SECRET);
 
         // Construct Offering Description of your Offering incrementally
-        RegistrableOfferingDescription offeringDescription = 
-                provider.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-DemoParkingOffering")
-                        .withTimePeriod(new DateTime(2017, 2, 1, 0, 0, 0), new DateTime())
-                        .inRegion(BoundingBox.create(Location.create(42.5, 9.0), Location.create(43.2, 10.0)))
-                        .withLicenseType(LicenseType.CREATIVE_COMMONS);
-    
-        Endpoints endpoints = Endpoints.create(offeringDescription)
-                                       .withAccessRequestHandler(accessCallback);
+        RegistrableOfferingDescription offeringDescription = provider
+                .createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-DemoParkingOffering")
+                .withTimePeriod(new DateTime(2017, 2, 1, 0, 0, 0), new DateTime())
+                .inRegion(BoundingBox.create(Location.create(42.5, 9.0), Location.create(43.2, 10.0)))
+                .withLicenseType(LicenseType.CREATIVE_COMMONS);
+
+        Endpoints endpoints = Endpoints.create(offeringDescription).withAccessRequestHandler(accessCallback);
 
         provider.register(offeringDescription, endpoints);
 

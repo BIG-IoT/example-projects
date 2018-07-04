@@ -22,9 +22,9 @@ import java.util.concurrent.ExecutionException;
 import org.eclipse.bigiot.lib.Consumer;
 import org.eclipse.bigiot.lib.examples.types.MyParkingResultPojoAnnotated;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
-import org.eclipse.bigiot.lib.offering.AccessParameters;
 import org.eclipse.bigiot.lib.offering.AccessResponse;
 import org.eclipse.bigiot.lib.offering.Offering;
+import org.eclipse.bigiot.lib.offering.parameters.AccessParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,17 +46,16 @@ public class ExampleConsumerSubscriptionById {
         BridgeIotProperties prop = BridgeIotProperties.load("example.properties");
 
         // Initialize Consumer with Consumer ID and marketplace URL
-        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI)
-                                    .authenticate(prop.CONSUMER_SECRET);
+        Consumer consumer = new Consumer(prop.CONSUMER_ID, prop.MARKETPLACE_URI).authenticate(prop.CONSUMER_SECRET);
 
         // Subscribe to Offering by OfferingId
         Offering offering = consumer.subscribeByOfferingId("TestOrganization-TestProvider-DemoParkingOffering").get();
 
         // Define Input Data as access parameters
         AccessParameters accessParameters = AccessParameters.create();
-                 // .addRdfTypeValue("schema:latitude", 42.0)
-                 // .addRdfTypeValue("schema:longitude", 9.0);
-        
+        // .addRdfTypeValue("schema:latitude", 42.0)
+        // .addRdfTypeValue("schema:longitude", 9.0);
+
         // Access Offering one-time with Access Parameters (input data)
         AccessResponse response = offering.accessOneTime(accessParameters).get();
 

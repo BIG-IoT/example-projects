@@ -26,11 +26,10 @@ import org.eclipse.bigiot.lib.handlers.AccessStreamFilterHandler;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
-import org.eclipse.bigiot.lib.model.Price.Euros;
+import org.eclipse.bigiot.lib.model.BigIotTypes.ValueType;
 import org.eclipse.bigiot.lib.model.BoundingBox;
 import org.eclipse.bigiot.lib.model.Location;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.ValueType;
+import org.eclipse.bigiot.lib.model.Price.Euros;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
 import org.eclipse.bigiot.lib.offering.RegisteredOffering;
@@ -91,17 +90,17 @@ public class ExampleProviderAccessStream {
                         .withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
                         .inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
                         // .inCity("Barcelona")
-                        .addInputData("longitude", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addInputData("latitude", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addInputData("radius", new RDFType("schema:geoRadius"), ValueType.NUMBER)
-                        .addOutputData("lon", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addOutputData("lat", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addOutputData("status", new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
+                        .addInputData("longitude", "schema:longitude", ValueType.NUMBER)
+                        .addInputData("latitude", "schema:latitude", ValueType.NUMBER)
+                        .addInputData("radius", "schema:geoRadius", ValueType.NUMBER)
+                        .addOutputData("lon", "schema:longitude", ValueType.NUMBER)
+                        .addOutputData("lat", "schema:latitude", ValueType.NUMBER)
+                        .addOutputData("status", "datex:parkingSpaceStatus", ValueType.TEXT)
                         .withPrice(Euros.amount(0.02)).withPricingModel(PricingModel.PER_ACCESS)
                         .withLicenseType(LicenseType.CREATIVE_COMMONS);
 
         Endpoints endpoints = Endpoints.create(offeringDescription)
-                   .withAccessStreamFilterHandler(accessStreamFilterCallback); // Optional only if filtering needed
+                .withAccessStreamFilterHandler(accessStreamFilterCallback); // Optional only if filtering needed
 
         RegisteredOffering offering = provider.register(offeringDescription, endpoints);
 
@@ -113,8 +112,7 @@ public class ExampleProviderAccessStream {
         while (System.in.available() == 0) {
 
             JSONObject jsonObject = new JSONObject().put("lat", 42.0 + r.nextFloat() * 0.01)
-                    .put("lon", 9.0 + r.nextFloat() * 0.01)
-                    .put("status", r.nextBoolean() ? "available" : "occupied");
+                    .put("lon", 9.0 + r.nextFloat() * 0.01).put("status", r.nextBoolean() ? "available" : "occupied");
 
             // add new Output Data element to the Offering Access Stream=
             offering.queue(jsonObject);

@@ -27,11 +27,10 @@ import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
+import org.eclipse.bigiot.lib.model.BigIotTypes.ValueType;
 import org.eclipse.bigiot.lib.model.BoundingBox;
 import org.eclipse.bigiot.lib.model.Location;
 import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
@@ -97,25 +96,24 @@ public class ExampleProviderWithAccessRestriction {
                 provider.createOfferingDescription("DemoParkingOfferingWithAccessRestriction")
                         .withName("Demo Parking Offering with Access Restriction")
                         .withCategory("urn:big-iot:ParkingSpaceCategory")
-/* ---------------> */  .restrictedToOrganizations(prop.ORGANIZATION)
+                        /* ---------------> */ .restrictedToOrganizations(prop.ORGANIZATION)
                         .withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
                         .inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
                         // .inCity("Barcelona")
-                        .addInputData("longitude", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addInputData("latitude", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addInputData("radius", new RDFType("schema:geoRadius"), ValueType.NUMBER)
-                        .addOutputData("lon", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addOutputData("lat", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addOutputData("dist", new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
-                        .addOutputData("status", new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
+                        .addInputData("longitude", "schema:longitude", ValueType.NUMBER)
+                        .addInputData("latitude", "schema:latitude", ValueType.NUMBER)
+                        .addInputData("radius", "schema:geoRadius", ValueType.NUMBER)
+                        .addOutputData("lon", "schema:longitude", ValueType.NUMBER)
+                        .addOutputData("lat", "schema:latitude", ValueType.NUMBER)
+                        .addOutputData("dist", "datex:distanceFromParkingSpace", ValueType.NUMBER)
+                        .addOutputData("status", "datex:parkingSpaceStatus", ValueType.TEXT)
                         .withPrice(Euros.amount(0.02)).withPricingModel(PricingModel.PER_ACCESS)
                         .withLicenseType(LicenseType.CREATIVE_COMMONS);
 
-        Endpoints endpoints = Endpoints.create(offeringDescription)
-                .withAccessRequestHandler(accessCallback);
+        Endpoints endpoints = Endpoints.create(offeringDescription).withAccessRequestHandler(accessCallback);
 
         provider.register(offeringDescription, endpoints);
-        
+
         // Run until user input is obtained
         System.out.println(">>>>>>  Terminate ExampleProvider by pressing ENTER  <<<<<<");
         Scanner keyboard = new Scanner(System.in);

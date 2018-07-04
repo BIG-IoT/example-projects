@@ -25,13 +25,12 @@ import org.eclipse.bigiot.lib.feed.AccessFeed;
 import org.eclipse.bigiot.lib.misc.BridgeIotProperties;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.ValueType;
+import org.eclipse.bigiot.lib.model.BigIotTypes.ValueType;
 import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.offering.AccessParameters;
 import org.eclipse.bigiot.lib.offering.AccessResponse;
 import org.eclipse.bigiot.lib.offering.Offering;
 import org.eclipse.bigiot.lib.offering.SubscribableOfferingDescription;
+import org.eclipse.bigiot.lib.offering.parameters.AccessParameters;
 import org.eclipse.bigiot.lib.query.OfferingQuery;
 
 import org.joda.time.Duration;
@@ -51,9 +50,8 @@ public class ExampleConsumer {
 		OfferingQuery query = OfferingQuery.create("RandomNumberQuery")
 				.withName("Random Number Query")
                 .withCategory("urn:proposed:RandomValues")
-                //.addInputData("longitude", new RDFType("schema:longitude"))
-                //.addInputData("latitude", new RDFType("schema:latitude"))
-                .addOutputData(new RDFType("proposed:randomValue"), ValueType.NUMBER)
+                // .addInputData("http://schema.org/latitude", ValueType.NUMBER)
+                .addOutputData("proposed:randomValue", ValueType.NUMBER)
                 //.inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
                 //.withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
 				.withPricingModel(PricingModel.PER_ACCESS)
@@ -73,6 +71,7 @@ public class ExampleConsumer {
 	
 			// Prepare Access Parameters
 			AccessParameters accessParameters = AccessParameters.create();
+			        // .addRdfTypeValue("http://schema.org/latitude", 41);
 			
 			// EXAMPLE 1: ONE-TIME ACCESS to the Offering
 			AccessResponse response = offering.accessOneTime(accessParameters).get();

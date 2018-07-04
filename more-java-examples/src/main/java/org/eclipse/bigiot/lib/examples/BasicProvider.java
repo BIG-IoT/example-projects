@@ -26,11 +26,10 @@ import org.eclipse.bigiot.lib.exceptions.NotRegisteredException;
 import org.eclipse.bigiot.lib.handlers.AccessRequestHandler;
 import org.eclipse.bigiot.lib.model.BigIotTypes.LicenseType;
 import org.eclipse.bigiot.lib.model.BigIotTypes.PricingModel;
+import org.eclipse.bigiot.lib.model.BigIotTypes.ValueType;
 import org.eclipse.bigiot.lib.model.BoundingBox;
 import org.eclipse.bigiot.lib.model.Location;
 import org.eclipse.bigiot.lib.model.Price.Euros;
-import org.eclipse.bigiot.lib.model.RDFType;
-import org.eclipse.bigiot.lib.model.ValueType;
 import org.eclipse.bigiot.lib.offering.Endpoints;
 import org.eclipse.bigiot.lib.offering.OfferingDescription;
 import org.eclipse.bigiot.lib.offering.RegistrableOfferingDescription;
@@ -74,8 +73,8 @@ public class BasicProvider {
             return BigIotHttpResponse.okay().withBody(jsonArray);
 
             // return BigIotHttpResponse errorResponse = BigIotHttpResponse.error()
-            //          .withBody("{\"status\":\"error\"}")
-            //          .withStatus(422).asJsonType();
+            // .withBody("{\"status\":\"error\"}")
+            // .withStatus(422).asJsonType();
         }
     };
 
@@ -84,32 +83,30 @@ public class BasicProvider {
 
         // Initialize provider with provider id and Marketplace URI
         ProviderSpark provider = ProviderSpark.create(PROVIDER_ID, MARKETPLACE_URI, "localhost", 9003)
-                                              .authenticate(PROVIDER_SECRET);
+                .authenticate(PROVIDER_SECRET);
 
         // Construct Offering Description of your Offering incrementally
         RegistrableOfferingDescription offeringDescription =
                 // provider.createOfferingDescriptionFromOfferingId("TestOrganization-TestProvider-Manual_Offering_Test")
                 provider.createOfferingDescription("BasicDemoParkingSpotOffering")
-                        .withName("Basic Demo Parking Offering")
-                        .withCategory("urn:big-iot:ParkingSpaceCategory")
+                        .withName("Basic Demo Parking Offering").withCategory("urn:big-iot:ParkingSpaceCategory")
                         .inRegion(BoundingBox.create(Location.create(42.1, 9.0), Location.create(43.2, 10.0)))
                         // .inRegion("Germany")
                         .withTimePeriod(new DateTime(2017, 1, 1, 0, 0, 0), new DateTime())
-                        .addInputData("longitude", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addInputData("latitude", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addInputData("radius", new RDFType("schema:geoRadius"), ValueType.NUMBER)
-                        .addOutputData("lon", new RDFType("schema:longitude"), ValueType.NUMBER)
-                        .addOutputData("lat", new RDFType("schema:latitude"), ValueType.NUMBER)
-                        .addOutputData("dist", new RDFType("datex:distanceFromParkingSpace"), ValueType.NUMBER)
-                        .addOutputData("status", new RDFType("datex:parkingSpaceStatus"), ValueType.TEXT)
+                        .addInputData("longitude", "schema:longitude", ValueType.NUMBER)
+                        .addInputData("latitude", "schema:latitude", ValueType.NUMBER)
+                        .addInputData("radius", "schema:geoRadius", ValueType.NUMBER)
+                        .addOutputData("lon", "schema:longitude", ValueType.NUMBER)
+                        .addOutputData("lat", "schema:latitude", ValueType.NUMBER)
+                        .addOutputData("dist", "datex:distanceFromParkingSpace", ValueType.NUMBER)
+                        .addOutputData("status", "datex:parkingSpaceStatus", ValueType.TEXT)
                         .withPrice(Euros.amount(0.001)).withPricingModel(PricingModel.PER_ACCESS)
                         .withLicenseType(LicenseType.OPEN_DATA_LICENSE);
 
-        Endpoints endpoints = Endpoints.create(offeringDescription)
-                                       .withAccessRequestHandler(accessCallback);
+        Endpoints endpoints = Endpoints.create(offeringDescription).withAccessRequestHandler(accessCallback);
 
         provider.register(offeringDescription, endpoints);
-        
+
         // Run until user input is obtained
         System.out.println(">>>>>>  Terminate ExampleProvider by pressing ENTER  <<<<<<");
         Scanner keyboard = new Scanner(System.in);
